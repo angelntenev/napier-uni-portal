@@ -3,10 +3,11 @@ package uk.ac.napier.soc.ssd.coursework.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-
+import org.owasp.encoder.Encode;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
+import org.owasp.encoder.Encode;
 import org.springframework.data.elasticsearch.annotations.Document;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -72,7 +73,7 @@ public class Course implements Serializable {
     }
 
     public String getDescription() {
-        return description;
+        return Encode.forHtmlContent(description);
     }
 
     public Course description(String description) {

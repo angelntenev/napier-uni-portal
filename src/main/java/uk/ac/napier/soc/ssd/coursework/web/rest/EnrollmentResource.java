@@ -3,10 +3,14 @@ package uk.ac.napier.soc.ssd.coursework.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import uk.ac.napier.soc.ssd.coursework.domain.Enrollment;
 import uk.ac.napier.soc.ssd.coursework.repository.EnrollmentRepository;
 import uk.ac.napier.soc.ssd.coursework.repository.HibernateUtil;
 import uk.ac.napier.soc.ssd.coursework.repository.search.EnrollmentSearchRepository;
+import uk.ac.napier.soc.ssd.coursework.security.SecurityUtils;
 import uk.ac.napier.soc.ssd.coursework.web.rest.errors.BadRequestAlertException;
 import uk.ac.napier.soc.ssd.coursework.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -15,15 +19,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import java.security.Security;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
 
 /**
  * REST controller for managing Enrollment.
@@ -54,6 +56,7 @@ public class EnrollmentResource {
      */
     @PostMapping("/enrollments")
     @Timed
+    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<Enrollment> createEnrollment(@RequestBody Enrollment enrollment) throws URISyntaxException {
         log.debug("REST request to save Enrollment : {}", enrollment);
         if (enrollment.getId() != null) {
@@ -77,6 +80,7 @@ public class EnrollmentResource {
      */
     @PutMapping("/enrollments")
     @Timed
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Enrollment> updateEnrollment(@RequestBody Enrollment enrollment) throws URISyntaxException {
         log.debug("REST request to update Enrollment : {}", enrollment);
         if (enrollment.getId() == null) {
@@ -96,9 +100,16 @@ public class EnrollmentResource {
      */
     @GetMapping("/enrollments")
     @Timed
+    //@PreAuthorize("hasRole('ADMIN')")
     public List<Enrollment> getAllEnrollments(@RequestParam(required = false, defaultValue = "false") boolean eagerload) {
         log.debug("REST request to get all Enrollments");
-        return enrollmentRepository.findAllWithEagerRelationships();
+        //return enrollmentRepository.findAllWithEagerRelationships();
+        if (SecurityUtils.getCurrentUserLogin().orElse("").equals("admin"))
+            return enrollmentRepository.findAllWithEagerRelationships();
+        else
+
+            return enrollmentRepository.findByUserIsCurrentUser();
+
     }
 
     /**
@@ -115,6 +126,7 @@ public class EnrollmentResource {
         return ResponseUtil.wrapOrNotFound(enrollment);
     }
 
+
     /**
      * DELETE  /enrollments/:id : delete the "id" enrollment.
      *
@@ -123,6 +135,7 @@ public class EnrollmentResource {
      */
     @DeleteMapping("/enrollments/{id}")
     @Timed
+    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<Void> deleteEnrollment(@PathVariable Long id) {
         log.debug("REST request to delete Enrollment : {}", id);
 
